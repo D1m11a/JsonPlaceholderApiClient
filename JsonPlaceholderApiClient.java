@@ -77,6 +77,22 @@ public class JsonPlaceholderApiClient {
         return responseBody;
     }
 
+    public static JSONArray getUserPosts(int userId) throws IOException {
+        HttpClient httpClient = HttpClients.createDefault();
+        HttpGet request = new HttpGet(BASE_URL + "/users/" + userId + "/posts");
+
+        HttpResponse response = httpClient.execute(request);
+        String responseBody = EntityUtils.toString(response.getEntity());
+
+        // Перевірка на коректний JSON-масив
+        try {
+            return new JSONArray(responseBody);
+        } catch (org.json.JSONException e) {
+            System.err.println("Отриманий рядок не є JSON-масивом: " + responseBody);
+            return null;
+        }
+    }
+
     public static String getCommentsForLatestPost(int userId) throws IOException {
         HttpClient httpClient = HttpClients.createDefault();
         HttpGet request = new HttpGet(BASE_URL + "/users/" + userId + "/posts");
@@ -84,6 +100,15 @@ public class JsonPlaceholderApiClient {
 
         int latestPostId = 0;
         String postResponse = EntityUtils.toString(response.getEntity());
+
+        JSONArray allUserPosts = new JSONArray(postResponse);
+        for (int i = 0; i < allUserPosts.length(); i++) {
+            JSONObject post = allUserPosts.getJSONObject(i);
+            int postId = post.getInt("id");
+            if (postId > latestPostId) {
+                latestPostId = postId;
+            }
+        }
 
         request = new HttpGet(BASE_URL + "/posts/" + latestPostId + "/comments");
         response = httpClient.execute(request);
@@ -120,8 +145,8 @@ public class JsonPlaceholderApiClient {
 
     public static void main(String[] args) {
         try {
-            String userJson = "{\"name\":\"John\",\"username\":\"johndoe\",\"email\":\"john@example.com\"}";
-            String createdUser = createUser(userJson);
+            String newUserJson = "{\"name\":\"John\",\"username\":\"johndoe\",\"email\":\"john@example.com\"}";
+            String createdUser = createUser(newUserJson);
             System.out.println("Created User: " + createdUser);
 
             int userIdToUpdate = 1;
@@ -131,24 +156,43 @@ public class JsonPlaceholderApiClient {
 
             int userIdToDelete = 2;
             int statusCode = deleteUser(userIdToDelete);
-            System.out.println("Delete User Status Code: " + statusCode);
+            if (statusCode >= 200 && statusCode < 300) {
+                System.out.println("User deleted successfully.");
+            } else {
+                System.out.println("Failed to delete user. Status Code: " + statusCode);
+            }
 
             String allUsers = getAllUsers();
             System.out.println("All Users: " + allUsers);
 
-            int userIdToGet = 2;
+            int userIdToGet = 3;
             String userById = getUserById(userIdToGet);
             System.out.println("User by ID: " + userById);
 
-            String usernameToGet = "johndoe";
+            String usernameToGet = "Karianne";
             String userByUsername = getUserByUsername(usernameToGet);
             System.out.println("User by Username: " + userByUsername);
 
-            int userIdForComments = 4;
-            String commentsForLatestPost = getCommentsForLatestPost(userIdForComments);
-            System.out.println("Comments for Latest Post: " + commentsForLatestPost);
+            JSONArray allUserPosts = getUserPosts(1);
+            if (allUserPosts != null) {
+                int latestPostId = -1;
+                for (int i = 0; i < allUserPosts.length(); i++) {
+                    JSONObject post = allUserPosts.getJSONObject(i);
+                    int postId = post.getInt("id");
+                    if (postId > latestPostId) {
+                        latestPostId = postId;
+                    }
+                }
 
-            int userIdForOpenTasks = 5;
+                String commentsForLatestPost = getCommentsForLatestPost(latestPostId);
+                String fileName = "user-1-post-" + latestPostId + "-comments.json";
+                try (FileWriter fileWriter = new FileWriter(fileName)) {
+                    fileWriter.write(commentsForLatestPost);
+                    System.out.println("Comments saved to file: " + fileName);
+                }
+            }
+
+            int userIdForOpenTasks = 1;
             String openTasksForUser = getOpenTasksForUser(userIdForOpenTasks);
             System.out.println("Open Tasks for User: " + openTasksForUser);
         } catch (IOException e) {
