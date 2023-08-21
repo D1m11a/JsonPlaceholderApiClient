@@ -117,4 +117,42 @@ public class JsonPlaceholderApiClient {
 
         return openTasksArray.toString();
     }
+
+    public static void main(String[] args) {
+        try {
+            String userJson = "{\"name\":\"John\",\"username\":\"johndoe\",\"email\":\"john@example.com\"}";
+            String createdUser = createUser(userJson);
+            System.out.println("Created User: " + createdUser);
+
+            int userIdToUpdate = 1;
+            String updatedUserJson = "{\"name\":\"Updated John\",\"username\":\"updatedjohndoe\",\"email\":\"updatedjohn@example.com\"}";
+            String updatedUser = updateUser(userIdToUpdate, updatedUserJson);
+            System.out.println("Updated User: " + updatedUser);
+
+            int userIdToDelete = 2;
+            int statusCode = deleteUser(userIdToDelete);
+            System.out.println("Delete User Status Code: " + statusCode);
+
+            String allUsers = getAllUsers();
+            System.out.println("All Users: " + allUsers);
+
+            int userIdToGet = 2;
+            String userById = getUserById(userIdToGet);
+            System.out.println("User by ID: " + userById);
+
+            String usernameToGet = "johndoe";
+            String userByUsername = getUserByUsername(usernameToGet);
+            System.out.println("User by Username: " + userByUsername);
+
+            int userIdForComments = 4;
+            String commentsForLatestPost = getCommentsForLatestPost(userIdForComments);
+            System.out.println("Comments for Latest Post: " + commentsForLatestPost);
+
+            int userIdForOpenTasks = 5;
+            String openTasksForUser = getOpenTasksForUser(userIdForOpenTasks);
+            System.out.println("Open Tasks for User: " + openTasksForUser);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
